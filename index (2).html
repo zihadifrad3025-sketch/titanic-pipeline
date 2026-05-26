@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Titanic ML Pipeline - Ifrad Ul Dider</title>
+  <style>
+    body {
+      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #1a1a2e;
+      color: white;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin: 0;
+    }
+
+    header p {
+      font-size: 16px;
+      color: #aaa;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: #0f3460;
+      color: #00e5ff;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .score-box {
+      background-color: #1a1a2e;
+      color: white;
+      text-align: center;
+      padding: 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    .score-box h2 {
+      font-size: 48px;
+      color: #00e5ff;
+      margin: 0;
+    }
+
+    .score-box p {
+      color: #aaa;
+      margin: 5px 0 0;
+    }
+
+    .metrics {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .metric {
+      flex: 1;
+      min-width: 150px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .metric h3 {
+      font-size: 28px;
+      margin: 0;
+      color: #1a1a2e;
+    }
+
+    .metric p {
+      font-size: 12px;
+      color: #888;
+      margin: 5px 0 0;
+      text-transform: uppercase;
+    }
+
+    .phase {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .phase-header {
+      background-color: #1a1a2e;
+      color: white;
+      padding: 15px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .phase-header h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .phase-header span {
+      color: #00e5ff;
+      font-size: 20px;
+    }
+
+    .phase-body {
+      padding: 20px;
+      display: none;
+    }
+
+    .phase-body p {
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 15px;
+    }
+
+    pre {
+      background: #1a1a2e;
+      color: #cdd6f4;
+      padding: 20px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .tag {
+      background: #e8f4fd;
+      border: 1px solid #1a1a2e;
+      color: #1a1a2e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    footer {
+      background-color: #1a1a2e;
+      color: #aaa;
+      text-align: center;
+      padding: 30px;
+      margin-top: 40px;
+      font-size: 13px;
+    }
+
+    footer a {
+      color: #00e5ff;
+      text-decoration: none;
+    }
+
+    .intro {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 25px;
+      line-height: 1.8;
+      color: #555;
+    }
+
+    .intro strong { color: #1a1a2e; }
+
+    h2.section-title {
+      font-size: 18px;
+      color: #1a1a2e;
+      margin-bottom: 15px;
+      border-left: 4px solid #00e5ff;
+      padding-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">CodeSignal · Journey into Data Science with Python</div>
+  <h1>🚢 Titanic Survival Prediction</h1>
+  <p>A beginner ML pipeline built with NumPy and Pandas only — no sklearn</p>
+  <p style="color:#aaa;font-size:13px;">By Ifrad Ul Dider</p>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    I completed the <strong>"Basics of NumPy and Pandas with Titanic Dataset"</strong> course on CodeSignal and challenged myself to build a full machine learning pipeline from scratch. No sklearn was used for any preprocessing or modeling — everything was built manually using NumPy and Pandas.
+  </div>
+
+  <!-- Score -->
+  <div class="score-box">
+    <p>Kaggle Public Score</p>
+    <h2>0.76076</h2>
+    <p>Titanic - Machine Learning from Disaster</p>
+  </div>
+
+  <!-- Metrics -->
+  <h2 class="section-title">Model Metrics</h2>
+  <div class="metrics">
+    <div class="metric">
+      <h3>76%</h3>
+      <p>Kaggle Score</p>
+    </div>
+    <div class="metric">
+      <h3>5</h3>
+      <p>K-Fold CV</p>
+    </div>
+    <div class="metric">
+      <h3>2000</h3>
+      <p>Epochs</p>
+    </div>
+    <div class="metric">
+      <h3>0.01</h3>
+      <p>L2 Lambda</p>
+    </div>
+  </div>
+
+  <!-- Tools used -->
+  <h2 class="section-title">Tools Used</h2>
+  <div class="tag-list">
+    <span class="tag">Python</span>
+    <span class="tag">NumPy</span>
+    <span class="tag">Pandas</span>
+    <span class="tag">Matplotlib</span>
+    <span class="tag">Kaggle</span>
+    <span class="tag">CodeSignal</span>
+  </div>
+
+  <!-- Phases -->
+  <h2 class="section-title">Project Phases</h2>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle(this)">
+      <h2>Phase 1 — Data Wrangling</h2>
+      <span>+</span>
+    </div>
+    <div class="phase-body">
+      <p>Handled missing values using group-based imputation — missing <strong>Age</strong> values were filled using the median grouped by Pclass, Sex, and Title (extracted from passenger names). Fare outliers were capped using the IQR method instead of dropping rows.</p>
+      <p><strong>Features engineered:</strong> Title, FamilySize, IsAlone, AgeBin, FareBin, Deck</p>
+      <pre>df['Title'] = df['Name'].str.extract(r' ([A-Za-z]+)\.', expand=False)
+df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+df['IsAlone'] = (df['FamilySize'] == 1).astype(int)
+df['Deck'] = df['Cabin'].str[0].fillna('U')</pre>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle(this)">
+      <h2>Phase 2 — NumPy Encoding & Normalization</h2>
+      <span>+</span>
+    </div>
+    <div class="phase-body">
+      <p>Built a one-hot encoder, Z-score normalizer, and Min-Max normalizer from scratch using only NumPy — no pd.get_dummies or sklearn preprocessing.</p>
+      <pre>def one_hot(arr):
+    classes = np.unique(arr)
+    result = np.zeros((len(arr), len(classes)), dtype=int)
+    for i, cls in enumerate(classes):
+        result[:, i] = (arr == cls).astype(int)
+    return result, classes
+
+def zscore(X, mu=None, std=None):
+    if mu is None:
+        mu = X.mean(axis=0)
+        std = X.std(axis=0)
+    std[std == 0] = 1
+    return (X - mu) / std, mu, std</pre>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle(this)">
+      <h2>Phase 3 — Logistic Regression from Scratch</h2>
+      <span>+</span>
+    </div>
+    <div class="phase-body">
+      <p>Implemented a full Logistic Regression class using only NumPy. Includes sigmoid activation, binary cross-entropy loss, L2 regularization, and gradient descent over 2000 epochs.</p>
+      <pre>def _sigmoid(self, z):
+    return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
+
+def _loss(self, y, y_hat):
+    eps = 1e-15
+    y_hat = np.clip(y_hat, eps, 1 - eps)
+    bce = -np.mean(y * np.log(y_hat) + (1-y) * np.log(1-y_hat))
+    l2  = (self.lambda_ / (2 * len(y))) * np.sum(self.w ** 2)
+    return bce + l2</pre>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle(this)">
+      <h2>Phase 4 — Evaluation Without sklearn</h2>
+      <span>+</span>
+    </div>
+    <div class="phase-body">
+      <p>All evaluation metrics were built from scratch — Accuracy, Precision, Recall, F1, and Confusion Matrix. Also implemented 5-fold cross validation manually using array slicing.</p>
+      <pre>def compute_metrics(y_true, y_pred):
+    TP = np.sum((y_true == 1) & (y_pred == 1))
+    TN = np.sum((y_true == 0) & (y_pred == 0))
+    FP = np.sum((y_true == 0) & (y_pred == 1))
+    FN = np.sum((y_true == 1) & (y_pred == 0))
+    accuracy  = (TP + TN) / len(y_true)
+    precision = TP / (TP + FP + 1e-10)
+    recall    = TP / (TP + FN + 1e-10)
+    f1 = 2 * precision * recall / (precision + recall + 1e-10)
+    return accuracy, precision, recall, f1</pre>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle(this)">
+      <h2>Phase 5 — Predict New Passengers</h2>
+      <span>+</span>
+    </div>
+    <div class="phase-body">
+      <p>Built a full preprocessing pipeline that takes a raw passenger dictionary and returns a survival probability. Model weights were saved and loaded using NumPy's .npy format.</p>
+      <pre>my_passenger = {
+    "Age": 28,
+    "Sex": "female",
+    "Pclass": 2,
+    "Fare": 30,
+    "SibSp": 0,
+    "Parch": 0,
+    "Embarked": "S"
+}
+predict_passenger(my_passenger)
+# Survival probability: 72.4% → LIKELY SURVIVED</pre>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Built by <strong style="color:white;">Ifrad Ul Dider</strong> · NumPy & Pandas only · Kaggle score: 0.76076</p>
+  <p style="margin-top:8px;">
+    <a href="https://www.kaggle.com" target="_blank">Kaggle Notebook</a> ·
+    <a href="https://codesignal.com" target="_blank">CodeSignal Certificate</a>
+  </p>
+</footer>
+
+<script>
+  function toggle(header) {
+    var body = header.nextElementSibling;
+    var icon = header.querySelector('span');
+    if (body.style.display === 'block') {
+      body.style.display = 'none';
+      icon.textContent = '+';
+    } else {
+      body.style.display = 'block';
+      icon.textContent = '−';
+    }
+  }
+</script>
+
+</body>
+</html>
