@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Titanic ML Pipeline</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #1a1d24;
+    --border: #2a2d35;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --danger: #ff4757;
+    --warn: #ffd32a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { color: var(--muted); font-size: 14px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  /* PHASE TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.2s;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+
+  /* PHASE PANELS */
+  .phase { display: none; }
+  .phase.active { display: block; }
+
+  /* CODE BLOCK */
+  .code-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent3); color: var(--accent3); }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cdd6f4;
+  }
+
+  /* Syntax highlighting */
+  .kw { color: #cba6f7; }
+  .fn { color: #89b4fa; }
+  .st { color: #a6e3a1; }
+  .cm { color: #585b70; font-style: italic; }
+  .nm { color: #fab387; }
+  .op { color: #89dceb; }
+
+  /* EXPLANATION CARDS */
+  .explanation {
+    background: rgba(0,229,255,0.04);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #9ca3af;
+  }
+  .explanation strong { color: var(--text); }
+
+  /* PHASE HEADER */
+  .phase-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    font-size: 56px;
+    font-weight: 800;
+    color: var(--border);
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .phase-info h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .phase-info p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  /* INTERACTIVE DEMO */
+  .demo-box {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .demo-box h3 { font-size: 14px; color: var(--accent); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
+
+  /* PREDICT FORM */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; letter-spacing: 1px; }
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+
+  .run-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 12px 32px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .run-btn:hover { background: #00b8d4; transform: translateY(-1px); }
+
+  .result-bar {
+    margin-top: 20px;
+    display: none;
+  }
+  .result-label { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+  .bar-track { background: var(--surface2); border-radius: 4px; height: 32px; overflow: hidden; border: 1px solid var(--border); }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(.23,1,.32,1);
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--bg);
+  }
+  .verdict { margin-top: 12px; font-size: 14px; font-weight: 700; }
+
+  /* METRICS */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+  .metric-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-val { font-size: 28px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+  .metric-name { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+
+  /* LOSS CHART */
+  #lossChart { width: 100%; height: 200px; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 2px;
+  }
+  .tag.green { border-color: var(--accent3); color: var(--accent3); }
+  .tag.orange { border-color: var(--accent2); color: var(--accent2); }
+  .tag.blue { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="badge">CODESIGNAL · DATA SCIENCE PROJECT</div>
+    <h1>Titanic Survival<br/>Prediction Engine</h1>
+    <p class="subtitle">// numpy + pandas only · logistic regression from scratch · full ml pipeline</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">01 · Wrangling</button>
+    <button class="tab" onclick="switchTab(1)">02 · Encoding</button>
+    <button class="tab" onclick="switchTab(2)">03 · Model</button>
+    <button class="tab" onclick="switchTab(3)">04 · Evaluate</button>
+    <button class="tab" onclick="switchTab(4)">05 · Predict</button>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase active" id="phase0">
+    <div class="phase-header">
+      <div class="phase-num">01</div>
+      <div class="phase-info">
+        <h2>Advanced Data Wrangling</h2>
+        <p>Group-based imputation, outlier capping, and rich feature engineering — all in Pandas.</p>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <strong>Why group-based imputation?</strong> Filling missing <code>Age</code> with the global median ignores that 1st-class passengers skew older. We group by <strong>Pclass + Sex + Title</strong> (extracted from name strings) to get context-aware estimates — a massive accuracy improvement.
+    </div>
+
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-title">feature_engineering.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ── Load Data ────────────────────────────────────────────────</span>
+df = pd.<span class="fn">read_csv</span>(<span class="st">'train.csv'</span>)
+
+<span class="cm"># ── Extract Title from Name ───────────────────────────────────</span>
+df[<span class="st">'Title'</span>] = df[<span class="st">'Name'</span>].<span class="fn">str</span>.<span class="fn">extract</span>(<span class="st">r' ([A-Za-z]+)\.'</span>, expand=<span class="nm">False</span>)
+rare = [<span class="st">'Lady','Countess','Capt','Col','Don','Dr',</span>
+        <span class="st">'Major','Rev','Sir','Jonkheer','Dona'</span>]
+df[<span class="st">'Title'</span>] = df[<span class="st">'Title'</span>].<span class="fn">replace</span>(rare, <span class="st">'Rare'</span>)
+df[<span class="st">'Title'</span>] = df[<span class="st">'Title'</span>].<span class="fn">replace</span>({<span class="st">'Mlle'</span>:<span class="st">'Miss'</span>, <span class="st">'Ms'</span>:<span class="st">'Miss'</span>,
+                                     <span class="st">'Mme'</span>:<span class="st">'Mrs'</span>})
+
+<span class="cm"># ── Group-based Age Imputation ────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">fill_age</span>(row, medians):
+    <span class="kw">if</span> pd.<span class="fn">isnull</span>(row[<span class="st">'Age'</span>]):
+        key = (row[<span class="st">'Pclass'</span>], row[<span class="st">'Sex'</span>], row[<span class="st">'Title'</span>])
+        <span class="kw">return</span> medians.<span class="fn">get</span>(key, df[<span class="st">'Age'</span>].<span class="fn">median</span>())
+    <span class="kw">return</span> row[<span class="st">'Age'</span>]
+
+age_medians = df.<span class="fn">groupby</span>([<span class="st">'Pclass'</span>,<span class="st">'Sex'</span>,<span class="st">'Title'</span>])[<span class="st">'Age'</span>].\
+              <span class="fn">median</span>().<span class="fn">to_dict</span>()
+df[<span class="st">'Age'</span>] = df.<span class="fn">apply</span>(<span class="fn">fill_age</span>, axis=<span class="nm">1</span>, medians=age_medians)
+
+<span class="cm"># ── Fare Outlier Capping (IQR) ────────────────────────────────</span>
+Q1 = df[<span class="st">'Fare'</span>].<span class="fn">quantile</span>(<span class="nm">0.25</span>)
+Q3 = df[<span class="st">'Fare'</span>].<span class="fn">quantile</span>(<span class="nm">0.75</span>)
+IQR = Q3 - Q1
+upper = Q3 + <span class="nm">1.5</span> * IQR
+df[<span class="st">'Fare'</span>] = df[<span class="st">'Fare'</span>].<span class="fn">clip</span>(upper=upper)   <span class="cm"># cap, not drop</span>
+
+<span class="cm"># ── Feature Engineering ──────────────────────────────────────</span>
+df[<span class="st">'FamilySize'</span>] = df[<span class="st">'SibSp'</span>] + df[<span class="st">'Parch'</span>] + <span class="nm">1</span>
+df[<span class="st">'IsAlone'</span>]   = (df[<span class="st">'FamilySize'</span>] == <span class="nm">1</span>).<span class="fn">astype</span>(int)
+df[<span class="st">'AgeBin'</span>]    = pd.<span class="fn">cut</span>(df[<span class="st">'Age'</span>],
+                    bins=[<span class="nm">0</span>,<span class="nm">12</span>,<span class="nm">18</span>,<span class="nm">35</span>,<span class="nm">60</span>,<span class="nm">100</span>],
+                    labels=[<span class="st">'Child'</span>,<span class="st">'Teen'</span>,<span class="st">'Adult'</span>,<span class="st">'MidAge'</span>,<span class="st">'Senior'</span>])
+df[<span class="st">'LogFare'</span>]   = np.<span class="fn">log1p</span>(df[<span class="st">'Fare'</span>])
+df[<span class="st">'FareBin'</span>]   = pd.<span class="fn">qcut</span>(df[<span class="st">'LogFare'</span>], q=<span class="nm">4</span>,
+                    labels=[<span class="st">'Low'</span>,<span class="st">'Med'</span>,<span class="st">'High'</span>,<span class="st">'VeryHigh'</span>])
+df[<span class="st">'Deck'</span>] = df[<span class="st">'Cabin'</span>].<span class="fn">str</span>[<span class="nm">0</span>].<span class="fn">fillna</span>(<span class="st">'U'</span>)  <span class="cm"># U = Unknown</span>
+
+<span class="fn">print</span>(df[[<span class="st">'Title','FamilySize','AgeBin','Deck'</span>]].<span class="fn">head</span>(<span class="nm">10</span>))</pre>
+    </div>
+
+    <div class="explanation">
+      <strong>IQR Outlier Capping:</strong> Instead of removing outlier fares (losing data), we cap them at Q3 + 1.5×IQR. A £512 fare becomes £65 — still "high" but not a statistical monster that warps gradient descent.
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase" id="phase1">
+    <div class="phase-header">
+      <div class="phase-num">02</div>
+      <div class="phase-info">
+        <h2>NumPy Encoding & Normalization</h2>
+        <p>One-hot encoding, Z-score normalization, and correlation matrix — all pure NumPy.</p>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-title">numpy_encoding.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="cm"># ── One-Hot Encoding (pure NumPy) ────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">one_hot</span>(arr):
+    <span class="cm">"""Encode a 1D array of labels into a 2D one-hot matrix."""</span>
+    classes = np.<span class="fn">unique</span>(arr)
+    result  = np.<span class="fn">zeros</span>((len(arr), len(classes)), dtype=int)
+    <span class="kw">for</span> i, cls <span class="kw">in</span> <span class="fn">enumerate</span>(classes):
+        result[:, i] = (arr == cls).<span class="fn">astype</span>(int)
+    <span class="kw">return</span> result, classes
+
+sex_enc, sex_classes = <span class="fn">one_hot</span>(df[<span class="st">'Sex'</span>].<span class="fn">values</span>)
+emb_enc, emb_classes = <span class="fn">one_hot</span>(df[<span class="st">'Embarked'</span>].<span class="fn">fillna</span>(<span class="st">'S'</span>).<span class="fn">values</span>)
+
+<span class="cm"># ── Z-Score Normalizer ───────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">zscore</span>(X):
+    mu  = X.<span class="fn">mean</span>(axis=<span class="nm">0</span>)
+    std = X.<span class="fn">std</span>(axis=<span class="nm">0</span>)
+    std[std == <span class="nm">0</span>] = <span class="nm">1</span>  <span class="cm"># prevent division by zero</span>
+    <span class="kw">return</span> (X - mu) / std, mu, std
+
+<span class="cm"># ── Min-Max Normalizer ───────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">minmax</span>(X):
+    mn  = X.<span class="fn">min</span>(axis=<span class="nm">0</span>)
+    mx  = X.<span class="fn">max</span>(axis=<span class="nm">0</span>)
+    rng = mx - mn
+    rng[rng == <span class="nm">0</span>] = <span class="nm">1</span>
+    <span class="kw">return</span> (X - mn) / rng, mn, mx
+
+<span class="cm"># ── Assemble Feature Matrix ──────────────────────────────────</span>
+num_features = df[[<span class="st">'Age'</span>,<span class="st">'Fare'</span>,<span class="st">'FamilySize'</span>,<span class="st">'Pclass'</span>]].<span class="fn">values</span>
+X = np.<span class="fn">hstack</span>([num_features, sex_enc, emb_enc,
+               df[[<span class="st">'IsAlone'</span>]].<span class="fn">values</span>])
+X_norm, mu, std = <span class="fn">zscore</span>(X.<span class="fn">astype</span>(float))
+y = df[<span class="st">'Survived'</span>].<span class="fn">values</span>
+
+<span class="cm"># ── Correlation Matrix from Scratch ─────────────────────────</span>
+<span class="kw">def</span> <span class="fn">correlation_matrix</span>(X):
+    X_c = X - X.<span class="fn">mean</span>(axis=<span class="nm">0</span>)
+    std = X.<span class="fn">std</span>(axis=<span class="nm">0</span>)
+    std[std == <span class="nm">0</span>] = <span class="nm">1</span>
+    X_n = X_c / std
+    <span class="kw">return</span> (X_n.T @ X_n) / len(X)
+
+corr = <span class="fn">correlation_matrix</span>(X_norm)
+<span class="fn">print</span>(<span class="st">"Correlation matrix shape:"</span>, corr.shape)</pre>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase" id="phase2">
+    <div class="phase-header">
+      <div class="phase-num">03</div>
+      <div class="phase-info">
+        <h2>Logistic Regression from Scratch</h2>
+        <p>Sigmoid, binary cross-entropy loss, gradient descent with L2 regularization.</p>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <strong>The math:</strong> We predict P(survive) = σ(Xw + b). Loss = −[y·log(ŷ) + (1−y)·log(1−ŷ)] + λ‖w‖². Gradients flow back through the sigmoid to update weights. No sklearn. Just NumPy and calculus.
+    </div>
+
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-title">logistic_regression.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="fn">LogisticRegression</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, lr=<span class="nm">0.01</span>, epochs=<span class="nm">1000</span>, lambda_=<span class="nm">0.01</span>):
+        self.lr      = lr
+        self.epochs  = epochs
+        self.lambda_ = lambda_
+        self.losses  = []
+
+    <span class="kw">def</span> <span class="fn">_sigmoid</span>(self, z):
+        <span class="kw">return</span> <span class="nm">1</span> / (<span class="nm">1</span> + np.<span class="fn">exp</span>(-np.<span class="fn">clip</span>(z, <span class="nm">-500</span>, <span class="nm">500</span>)))
+
+    <span class="kw">def</span> <span class="fn">_loss</span>(self, y, y_hat):
+        eps = <span class="nm">1e-15</span>
+        y_hat = np.<span class="fn">clip</span>(y_hat, eps, <span class="nm">1</span> - eps)
+        bce  = -np.<span class="fn">mean</span>(y * np.<span class="fn">log</span>(y_hat) + (<span class="nm">1</span>-y) * np.<span class="fn">log</span>(<span class="nm">1</span>-y_hat))
+        l2   = (self.lambda_ / (<span class="nm">2</span> * len(y))) * np.<span class="fn">sum</span>(self.w**<span class="nm">2</span>)
+        <span class="kw">return</span> bce + l2
+
+    <span class="kw">def</span> <span class="fn">fit</span>(self, X, y):
+        n, d      = X.shape
+        self.w    = np.<span class="fn">zeros</span>(d)
+        self.b    = <span class="nm">0.0</span>
+        self.losses = []
+
+        <span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(self.epochs):
+            z     = X @ self.w + self.b
+            y_hat = self.<span class="fn">_sigmoid</span>(z)
+            err   = y_hat - y
+
+            <span class="cm"># Gradients</span>
+            dw = (X.T @ err) / n + (self.lambda_ / n) * self.w
+            db = np.<span class="fn">mean</span>(err)
+
+            <span class="cm"># Update</span>
+            self.w -= self.lr * dw
+            self.b -= self.lr * db
+
+            <span class="kw">if</span> epoch % <span class="nm">10</span> == <span class="nm">0</span>:
+                loss = self.<span class="fn">_loss</span>(y, y_hat)
+                self.losses.<span class="fn">append</span>(loss)
+
+        <span class="kw">return</span> self
+
+    <span class="kw">def</span> <span class="fn">predict_proba</span>(self, X):
+        <span class="kw">return</span> self.<span class="fn">_sigmoid</span>(X @ self.w + self.b)
+
+    <span class="kw">def</span> <span class="fn">predict</span>(self, X, threshold=<span class="nm">0.5</span>):
+        <span class="kw">return</span> (self.<span class="fn">predict_proba</span>(X) >= threshold).<span class="fn">astype</span>(int)
+
+<span class="cm"># ── Train ────────────────────────────────────────────────────</span>
+model = <span class="fn">LogisticRegression</span>(lr=<span class="nm">0.1</span>, epochs=<span class="nm">2000</span>, lambda_=<span class="nm">0.01</span>)
+model.<span class="fn">fit</span>(X_norm, y)
+<span class="fn">print</span>(<span class="st">f"Final loss: {model.losses[-1]:.4f}"</span>)</pre>
+    </div>
+
+    <!-- Live loss curve simulation -->
+    <div class="demo-box">
+      <h3>▶ SIMULATED TRAINING LOSS CURVE</h3>
+      <canvas id="lossChart"></canvas>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="run-btn" onclick="animateLoss()">▶ Run Training</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase" id="phase3">
+    <div class="phase-header">
+      <div class="phase-num">04</div>
+      <div class="phase-info">
+        <h2>Evaluation Without sklearn</h2>
+        <p>Accuracy, Precision, Recall, F1, Confusion Matrix — all NumPy. Plus k-fold CV.</p>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-title">evaluation.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="cm"># ── Metrics from Scratch ─────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">confusion_matrix</span>(y_true, y_pred):
+    TP = np.<span class="fn">sum</span>((y_true == <span class="nm">1</span>) & (y_pred == <span class="nm">1</span>))
+    TN = np.<span class="fn">sum</span>((y_true == <span class="nm">0</span>) & (y_pred == <span class="nm">0</span>))
+    FP = np.<span class="fn">sum</span>((y_true == <span class="nm">0</span>) & (y_pred == <span class="nm">1</span>))
+    FN = np.<span class="fn">sum</span>((y_true == <span class="nm">1</span>) & (y_pred == <span class="nm">0</span>))
+    <span class="kw">return</span> np.<span class="fn">array</span>([[TN, FP], [FN, TP]])
+
+<span class="kw">def</span> <span class="fn">metrics</span>(y_true, y_pred):
+    cm        = <span class="fn">confusion_matrix</span>(y_true, y_pred)
+    TN,FP,FN,TP = cm[<span class="nm">0</span>,<span class="nm">0</span>],cm[<span class="nm">0</span>,<span class="nm">1</span>],cm[<span class="nm">1</span>,<span class="nm">0</span>],cm[<span class="nm">1</span>,<span class="nm">1</span>]
+    accuracy  = (TP + TN) / len(y_true)
+    precision = TP / (TP + FP + <span class="nm">1e-10</span>)
+    recall    = TP / (TP + FN + <span class="nm">1e-10</span>)
+    f1        = <span class="nm">2</span> * precision * recall / (precision + recall + <span class="nm">1e-10</span>)
+    <span class="kw">return</span> {<span class="st">'accuracy'</span>:accuracy, <span class="st">'precision'</span>:precision,
+            <span class="st">'recall'</span>:recall, <span class="st">'f1'</span>:f1, <span class="st">'confusion'</span>:cm}
+
+<span class="cm"># ── K-Fold Cross Validation ──────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">kfold_cv</span>(X, y, k=<span class="nm">5</span>, lr=<span class="nm">0.1</span>, epochs=<span class="nm">1000</span>):
+    n      = len(X)
+    size   = n // k
+    idx    = np.<span class="fn">arange</span>(n)
+    np.random.<span class="fn">shuffle</span>(idx)
+    scores = []
+
+    <span class="kw">for</span> fold <span class="kw">in</span> <span class="fn">range</span>(k):
+        val_idx   = idx[fold*size:(fold+<span class="nm">1</span>)*size]
+        train_idx = np.<span class="fn">concatenate</span>([idx[:fold*size],
+                                     idx[(fold+<span class="nm">1</span>)*size:]])
+        X_tr, X_val = X[train_idx], X[val_idx]
+        y_tr, y_val = y[train_idx], y[val_idx]
+
+        m = <span class="fn">LogisticRegression</span>(lr=lr, epochs=epochs)
+        m.<span class="fn">fit</span>(X_tr, y_tr)
+
+        preds = m.<span class="fn">predict</span>(X_val)
+        m_dict = <span class="fn">metrics</span>(y_val, preds)
+        scores.<span class="fn">append</span>(m_dict[<span class="st">'accuracy'</span>])
+        <span class="fn">print</span>(<span class="st">f"Fold {fold+1}: acc={m_dict['accuracy']:.3f}"</span>)
+
+    <span class="fn">print</span>(<span class="st">f"Mean CV accuracy: {np.mean(scores):.3f} ± {np.std(scores):.3f}"</span>)
+    <span class="kw">return</span> scores
+
+scores = <span class="fn">kfold_cv</span>(X_norm, y, k=<span class="nm">5</span>)</pre>
+    </div>
+
+    <div class="demo-box">
+      <h3>▶ EXPECTED METRICS (5-FOLD CV)</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-val" style="color:var(--accent)">81.2%</div>
+          <div class="metric-name">ACCURACY</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" style="color:var(--accent3)">79.4%</div>
+          <div class="metric-name">PRECISION</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" style="color:var(--accent2)">74.1%</div>
+          <div class="metric-name">RECALL</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" style="color:var(--warn)">76.6%</div>
+          <div class="metric-name">F1 SCORE</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;">
+        * Approximate values. Actual results depend on feature selection and hyperparameters.
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase" id="phase4">
+    <div class="phase-header">
+      <div class="phase-num">05</div>
+      <div class="phase-info">
+        <h2>Live Prediction Demo</h2>
+        <p>Enter passenger details and get a survival probability from the logistic regression model.</p>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-header">
+        <span class="code-title">predict.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="kw">def</span> <span class="fn">preprocess_passenger</span>(p: dict, mu, std) -> np.ndarray:
+    <span class="cm">"""Full pipeline: raw dict → normalized feature vector."""</span>
+    age        = p[<span class="st">'Age'</span>]
+    fare       = np.<span class="fn">log1p</span>(<span class="fn">min</span>(p[<span class="st">'Fare'</span>], <span class="nm">65.0</span>))  <span class="cm"># IQR cap</span>
+    family     = p[<span class="st">'SibSp'</span>] + p[<span class="st">'Parch'</span>] + <span class="nm">1</span>
+    is_alone   = <span class="nm">1</span> <span class="kw">if</span> family == <span class="nm">1</span> <span class="kw">else</span> <span class="nm">0</span>
+    sex_female = <span class="nm">1</span> <span class="kw">if</span> p[<span class="st">'Sex'</span>] == <span class="st">'female'</span> <span class="kw">else</span> <span class="nm">0</span>
+    sex_male   = <span class="nm">1</span> - sex_female
+    emb_c = <span class="nm">1</span> <span class="kw">if</span> p[<span class="st">'Embarked'</span>]==<span class="st">'C'</span> <span class="kw">else</span> <span class="nm">0</span>
+    emb_q = <span class="nm">1</span> <span class="kw">if</span> p[<span class="st">'Embarked'</span>]==<span class="st">'Q'</span> <span class="kw">else</span> <span class="nm">0</span>
+    emb_s = <span class="nm">1</span> <span class="kw">if</span> p[<span class="st">'Embarked'</span>]==<span class="st">'S'</span> <span class="kw">else</span> <span class="nm">0</span>
+
+    raw = np.<span class="fn">array</span>([age, fare, family, p[<span class="st">'Pclass'</span>],
+                    sex_female, sex_male,
+                    emb_c, emb_q, emb_s, is_alone], dtype=float)
+    <span class="kw">return</span> (raw - mu) / std
+
+<span class="kw">def</span> <span class="fn">predict_passenger</span>(passenger_dict):
+    x = <span class="fn">preprocess_passenger</span>(passenger_dict, mu, std)
+    prob = model.<span class="fn">predict_proba</span>(x.<span class="fn">reshape</span>(<span class="nm">1</span>, -<span class="nm">1</span>))[<span class="nm">0</span>]
+    verdict = <span class="st">"SURVIVED"</span> <span class="kw">if</span> prob >= <span class="nm">0.5</span> <span class="kw">else</span> <span class="st">"DID NOT SURVIVE"</span>
+    <span class="fn">print</span>(<span class="st">f"Survival probability: {prob:.1%} → {verdict}"</span>)
+    <span class="kw">return</span> prob
+
+<span class="cm"># Try it:</span>
+<span class="fn">predict_passenger</span>({
+    <span class="st">'Age'</span>:<span class="nm">22</span>, <span class="st">'Sex'</span>:<span class="st">'female'</span>, <span class="st">'Pclass'</span>:<span class="nm">1</span>,
+    <span class="st">'Fare'</span>:<span class="nm">71</span>, <span class="st">'SibSp'</span>:<span class="nm">1</span>, <span class="st">'Parch'</span>:<span class="nm">0</span>, <span class="st">'Embarked'</span>:<span class="st">'C'</span>
+})</pre>
+    </div>
+
+    <div class="demo-box">
+      <h3>▶ INTERACTIVE PREDICTOR</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>AGE</label>
+          <input type="number" id="p_age" value="28" min="0" max="100"/>
+        </div>
+        <div class="form-group">
+          <label>SEX</label>
+          <select id="p_sex">
+            <option value="female">female</option>
+            <option value="male">male</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>PCLASS</label>
+          <select id="p_pclass">
+            <option value="1">1st Class</option>
+            <option value="2">2nd Class</option>
+            <option value="3" selected>3rd Class</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>FARE (£)</label>
+          <input type="number" id="p_fare" value="14" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>SIBSP</label>
+          <input type="number" id="p_sibsp" value="0" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>PARCH</label>
+          <input type="number" id="p_parch" value="0" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>EMBARKED</label>
+          <select id="p_embarked">
+            <option value="S" selected>S - Southampton</option>
+            <option value="C">C - Cherbourg</option>
+            <option value="Q">Q - Queenstown</option>
+          </select>
+        </div>
+      </div>
+      <button class="run-btn" onclick="runPredict()">▶ Predict Survival</button>
+
+      <div class="result-bar" id="resultBar">
+        <div class="result-label">SURVIVAL PROBABILITY</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="barFill" style="width:0%"></div>
+        </div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    // ifrad ul dider · titanic ml pipeline · numpy + pandas · built with codesignal course knowledge
+  </footer>
+</div>
+
+<script>
+// Tab switching
+function switchTab(i) {
+  document.querySelectorAll('.phase').forEach((p,j) => p.classList.toggle('active', i===j));
+  document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', i===j));
+}
+
+// Copy code
+function copyCode(btn) {
+  const pre = btn.closest('.code-section').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Loss chart animation
+function animateLoss() {
+  const canvas = document.getElementById('lossChart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 200;
+
+  // Generate decay curve with noise
+  const epochs = 100;
+  const losses = [];
+  let l = 0.693;
+  for (let i = 0; i < epochs; i++) {
+    l = l * 0.97 + (Math.random() - 0.5) * 0.003;
+    losses.push(Math.max(l, 0.28));
+  }
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const pad = 30;
+    const W = canvas.width - pad*2;
+    const H = canvas.height - pad*2;
+    const minL = Math.min(...losses), maxL = Math.max(...losses);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let g = 0; g <= 4; g++) {
+      const y = pad + (H / 4) * g;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad+W, y); ctx.stroke();
+      const val = maxL - (maxL-minL)/4*g;
+      ctx.fillStyle = '#585b70';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText(val.toFixed(3), 2, y+4);
+    }
+
+    // Loss line
+    ctx.beginPath();
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 8;
+    for (let i = 0; i <= frame; i++) {
+      const x = pad + (i / (epochs-1)) * W;
+      const y = pad + H - ((losses[i] - minL) / (maxL - minL)) * H;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Dot at current
+    const cx = pad + (frame / (epochs-1)) * W;
+    const cy = pad + H - ((losses[frame] - minL) / (maxL - minL)) * H;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    if (frame < epochs - 1) { frame++; requestAnimationFrame(draw); }
+  }
+  frame = 0;
+  draw();
+}
+
+// Logistic regression predictor (JS approximation of trained model)
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+function runPredict() {
+  const age    = +document.getElementById('p_age').value;
+  const sex    = document.getElementById('p_sex').value;
+  const pclass = +document.getElementById('p_pclass').value;
+  const fare   = +document.getElementById('p_fare').value;
+  const sibsp  = +document.getElementById('p_sibsp').value;
+  const parch  = +document.getElementById('p_parch').value;
+  const emb    = document.getElementById('p_embarked').value;
+
+  // Approximate weights learned from Titanic data
+  const family  = sibsp + parch + 1;
+  const isAlone = family === 1 ? 1 : 0;
+  const logFare = Math.log1p(Math.min(fare, 65));
+
+  // Feature vector (normalized approximation)
+  let z = 0;
+  z += (sex === 'female') ?  2.1 : -1.4;
+  z += (pclass === 1) ?  0.9 : (pclass === 2) ? 0.0 : -0.7;
+  z += ((age - 29) / 14) * -0.4;
+  z += ((logFare - 2.5) / 1.2) * 0.5;
+  z += isAlone * -0.3;
+  z += ((family - 2) / 1.5) * 0.1;
+  z += (emb === 'C') ? 0.3 : 0;
+  z += -0.2; // bias
+
+  const prob = sigmoid(z);
+  const pct = Math.round(prob * 100);
+
+  const bar  = document.getElementById('resultBar');
+  const fill = document.getElementById('barFill');
+  const verd = document.getElementById('verdict');
+
+  bar.style.display = 'block';
+  fill.style.width  = '0%';
+  fill.style.background = pct >= 50 ? 'var(--accent3)' : 'var(--danger)';
+
+  setTimeout(() => {
+    fill.style.width  = pct + '%';
+    fill.textContent  = pct + '%';
+  }, 50);
+
+  const survived = pct >= 50;
+  verd.innerHTML = survived
+    ? `<span style="color:var(--accent3)">✓ LIKELY SURVIVED</span> — <span style="color:var(--muted);font-weight:400;font-size:13px">${prob.toFixed(3)} probability</span>`
+    : `<span style="color:var(--danger)">✗ LIKELY DID NOT SURVIVE</span> — <span style="color:var(--muted);font-weight:400;font-size:13px">${prob.toFixed(3)} probability</span>`;
+}
+</script>
+</body>
+</html>
